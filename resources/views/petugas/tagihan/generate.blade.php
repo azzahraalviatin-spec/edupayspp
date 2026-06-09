@@ -11,7 +11,6 @@
         border-radius:14px;
         box-shadow:0 4px 20px rgba(0,0,0,.25);
     }
-
     .custom-input{
         background:#0f172a !important;
         border:1px solid #334155 !important;
@@ -19,19 +18,12 @@
         border-radius:10px;
         padding:10px 12px;
     }
-
-    .custom-input:focus{
-        border-color:#3b82f6 !important;
-        box-shadow:0 0 0 .2rem rgba(59,130,246,.15) !important;
-    }
-
     .custom-label{
         color:#93c5fd;
         font-size:13px;
         font-weight:600;
         margin-bottom:8px;
     }
-
     .generate-btn{
         background:linear-gradient(90deg,#2563eb,#3b82f6);
         border:none;
@@ -41,17 +33,23 @@
         font-weight:600;
         transition:.2s;
     }
-
     .generate-btn:hover{
         transform:translateY(-2px);
         box-shadow:0 8px 20px rgba(59,130,246,.35);
     }
-
     .info-alert{
         background:rgba(59,130,246,.12);
         border:1px solid rgba(59,130,246,.35);
         color:#bfdbfe;
         border-radius:10px;
+    }
+    .display-box{
+        background:#0f172a !important;
+        border:1px solid #334155 !important;
+        color:#fff !important;
+        border-radius:10px;
+        padding:10px 12px;
+        font-weight:600;
     }
 </style>
 
@@ -64,7 +62,6 @@
 
 <div class="row justify-content-center">
     <div class="col-md-7">
-
         <div class="custom-card p-4">
 
             <h4 class="fw-bold text-white mb-4">
@@ -84,56 +81,47 @@
             </div>
             @endif
 
+            @if(!$tahunAktif)
+            <div class="alert alert-warning border-0">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Tidak ada tahun ajaran yang aktif! Silakan aktifkan tahun ajaran terlebih dahulu.
+            </div>
+            @else
+
+            @php $bulanSekarang = date('n'); @endphp
+
             <form action="{{ route('petugas.tagihan.store') }}" method="POST">
                 @csrf
 
                 <div class="mb-4">
                     <label class="custom-label">Tahun Ajaran</label>
-
-                    <select name="tahun_ajaran_id" class="form-select custom-input">
-
-                        <option value="">-- Pilih Tahun Ajaran --</option>
-
-                        @foreach($tahunAjarans as $ta)
-                        <option value="{{ $ta->id }}"
-                            {{ $tahunAktif && $tahunAktif->id == $ta->id ? 'selected' : '' }}>
-                            {{ $ta->nama }} {{ $ta->is_aktif ? '(Aktif)' : '' }}
-                        </option>
-                        @endforeach
-
-                    </select>
+                    <div class="display-box">
+                        <i class="bi bi-calendar-check text-primary me-2"></i>
+                        {{ $tahunAktif->nama }}
+                        <span class="badge bg-success ms-2">Aktif</span>
+                    </div>
+                    <input type="hidden" name="tahun_ajaran_id" value="{{ $tahunAktif->id }}">
                 </div>
 
                 <div class="mb-4">
                     <label class="custom-label">Bulan</label>
-
-                    <select name="bulan" class="form-select custom-input">
-
-                        <option value="">-- Pilih Bulan --</option>
-
-                        @foreach($bulanList as $num => $nama)
-                        <option value="{{ $num }}"
-                            {{ $num == date('n') ? 'selected' : '' }}>
-                            {{ $nama }}
-                        </option>
-                        @endforeach
-
-                    </select>
+                    <div class="display-box">
+                        <i class="bi bi-calendar-month text-primary me-2"></i>
+                        {{ $bulanList[$bulanSekarang] }}
+                    </div>
+                    <input type="hidden" name="bulan" value="{{ $bulanSekarang }}">
                 </div>
 
-                <button type="submit"
-                    class="btn generate-btn w-100"
+                <button type="submit" class="btn generate-btn w-100"
                     onclick="return confirm('Yakin generate tagihan sekarang?')">
-
                     <i class="bi bi-lightning-charge-fill me-1"></i>
                     Generate Tagihan Sekarang
-
                 </button>
 
             </form>
+            @endif
 
         </div>
-
     </div>
 </div>
 

@@ -7,6 +7,7 @@ use App\Models\Siswa;
 use App\Models\Tagihan;
 use App\Models\Pembayaran;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -26,12 +27,12 @@ class DashboardController extends Controller
             ->whereYear('tanggal_bayar', Carbon::now()->year)
             ->sum('jumlah_bayar');
 
-  // PERBAIKAN SAKTI: Hanya mengambil 4 data siswa nunggak paling terbaru dari database MySQL
-        $siswaNunggak = Tagihan::with('siswa.kelas') // Sesuaikan dengan nama nama relasi model kamu
-                            ->where('status', 'Belum Bayar') // Memastikan hanya yang nunggak
-                            ->latest()                       // Mengurutkan dari yang paling baru input
-                            ->take(4)                        // Kunci paten cuma ambil 4 data saja
-                            ->get();
+        $siswaNunggak = Tagihan::with('siswa.kelas')
+            ->where('status', 'belum_bayar')
+            ->latest()
+            ->take(4)
+            ->get();
+
         $menungguVerifikasi = Pembayaran::with(['tagihan.siswa.kelas'])
             ->where('status_verifikasi', 'pending')
             ->latest()
@@ -46,16 +47,14 @@ class DashboardController extends Controller
                 ->sum('jumlah_bayar');
         }
 
+        // Notifikasi untuk navbar
+        $notifDatabase = Auth::user()->unreadNotifications;
+
         return view('admin.dashboard', compact(
-            'totalSiswa',
-            'totalLunas',
-            'totalBelumBayar',
-            'totalMenunggu',
-            'pemasukanHariIni',
-            'pemasukanBulanIni',
-            'siswaNunggak',
-            'menungguVerifikasi',
-            'grafikBulanan'
+            'totalSiswa', 'totalLunas', 'totalBelumBayar', 'totalMenunggu',
+            'pemasukanHariIni', 'pemasukanBulanIni',
+            'siswaNunggak', 'menungguVerifikasi', 'grafikBulanan',
+            'notifDatabase'
         ));
     }
 }

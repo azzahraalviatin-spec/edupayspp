@@ -367,12 +367,11 @@
     </div>
 
     {{-- Remember + Forgot --}}
-    <div class="form-bottom">
+ <div class="form-bottom">
         <div class="form-check">
             <input class="form-check-input" type="checkbox" name="remember" id="remember">
             <label class="form-check-label" for="remember">Ingat saya</label>
         </div>
-        <a href="{{ route('password.request') }}" class="forgot-link">Lupa password?</a>
     </div>
 
     <button type="submit" class="btn-submit">

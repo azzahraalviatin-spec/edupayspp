@@ -2,6 +2,52 @@
 @section('title', 'Riwayat Bayar')
 @section('content')
 
+<div class="card p-3 mb-3">
+    <h6 class="fw-bold text-white mb-3"><i class="bi bi-funnel me-2" style="color:#A9CBE0"></i>Filter Riwayat</h6>
+    <form method="GET" action="{{ route('siswa.riwayat') }}">
+        <div class="row g-2">
+            <div class="col-md-4">
+                <label class="text-white-50 small mb-1">Bulan</label>
+                <select name="bulan" class="form-select form-select-sm" style="background:#0f172a;border:1px solid #225688;color:#fff;">
+                    <option value="">-- Semua Bulan --</option>
+                    @foreach($bulanList as $angka => $nama)
+                        <option value="{{ $angka }}" {{ request('bulan') == $angka ? 'selected' : '' }}>{{ $nama }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="text-white-50 small mb-1">Tahun Ajaran</label>
+                <select name="tahun_ajaran" class="form-select form-select-sm" style="background:#0f172a;border:1px solid #225688;color:#fff;">
+                    <option value="">-- Semua Tahun --</option>
+                    @foreach($tahunAjaranList as $ta)
+                        <option value="{{ $ta->id }}" {{ request('tahun_ajaran') == $ta->id ? 'selected' : '' }}>{{ $ta->nama }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+                    <i class="bi bi-search me-1"></i>Filter
+                </button>
+                <a href="{{ route('siswa.riwayat') }}" class="btn btn-secondary btn-sm">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+@if($adaFilter)
+<div class="card p-3 mb-3" style="border-left: 3px solid #3b82f6;">
+    <div class="d-flex align-items-center gap-3">
+        <i class="bi bi-calculator text-primary fs-4"></i>
+        <div>
+            <div class="fw-bold text-white">Rp {{ number_format($totalFilter, 0, ',', '.') }}</div>
+            <div class="text-white-50 small">Total Pembayaran Sesuai Filter</div>
+        </div>
+    </div>
+</div>
+@endif
+
 <div class="card p-3">
     <h6 class="fw-bold text-white mb-3"><i class="bi bi-clock-history me-2" style="color:#A9CBE0"></i>Riwayat Pembayaran</h6>
     <div class="table-responsive">
@@ -50,4 +96,5 @@
         <div class="mt-3">{{ $riwayat->links() }}</div>
     </div>
 </div>
+
 @endsection

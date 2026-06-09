@@ -225,7 +225,7 @@
                         <div class="d-flex justify-content-between align-items-start gap-2">
                             <div style="flex:1; min-width:0;">
                                 @php
-                                    $notifData = json_decode($notif->data, true);
+                                 $notifData = is_array($notif->data) ? $notif->data : json_decode($notif->data, true);
                                     $judul = $notifData['judul'] ?? $notifData['title'] ?? $notifData['message'] ?? 'Notifikasi Baru';
                                     $pesan = $notifData['pesan'] ?? $notifData['body'] ?? ($notifData['data']['message'] ?? '');
                                 @endphp

@@ -46,11 +46,11 @@
     .custom-table tbody td { padding: 14px 10px !important; vertical-align: middle; color: #d0d2d6 !important; }
     .badge-tunai { background-color: rgba(40, 199, 111, 0.12) !important; color: #28c76f !important; border: 1px solid rgba(40, 199, 111, 0.3); }
     .badge-transfer { background-color: rgba(0, 145, 255, 0.12) !important; color: #0091ff !important; border: 1px solid rgba(0, 145, 255, 0.3); }
-    .badge-lunas { background-color: #28c76f !important; color: #ffffff !important; }
+    .badge-ewallet { background-color: rgba(115, 103, 240, 0.12) !important; color: #7367f0 !important; border: 1px solid rgba(115, 103, 240, 0.3); }
+    .badge-dana { background-color: rgba(0, 145, 255, 0.12) !important; color: #0091ff !important; border: 1px solid rgba(0, 145, 255, 0.3); }
+    .badge-valid { background-color: #28c76f !important; color: #ffffff !important; }
     .badge-pending { background-color: #ff9f43 !important; color: #ffffff !important; }
-    .badge-ditolak { background-color: #ea5455 !important; color: #ffffff !important; }
-
-    /* Pagination Styling */
+    .badge-tolak { background-color: #ea5455 !important; color: #ffffff !important; }
     .pagination .page-link { background-color: #111625 !important; border-color: #283046 !important; color: #b4b7bd !important; }
     .pagination .page-item.active .page-link { background-color: #3b82f6 !important; border-color: #3b82f6 !important; color: #fff !important; }
     .pagination .page-item.disabled .page-link { background-color: #161d31 !important; color: #676d7d !important; }
@@ -62,7 +62,6 @@
     </h6>
     <form action="{{ route('admin.laporan.index') }}" method="GET">
         <div class="row g-3">
-            {{-- DROPDOWN PILIH BULAN --}}
             <div class="col-md-3">
                 <label class="text-white-50 small mb-1">Bulan</label>
                 <select name="bulan" class="form-select custom-select">
@@ -72,8 +71,6 @@
                     @endforeach
                 </select>
             </div>
-
-            {{-- DROPDOWN PILIH TAHUN (2001 - 2040) --}}
             <div class="col-md-2">
                 <label class="text-white-50 small mb-1">Tahun</label>
                 <select name="tahun" class="form-select custom-select">
@@ -83,14 +80,10 @@
                     @endforeach
                 </select>
             </div>
-            
-            {{-- FITUR SEARCH NAMA / NIS --}}
             <div class="col-md-4">
                 <label class="text-white-50 small mb-1">Cari Siswa (Nama/NIS)</label>
                 <input type="text" name="search" class="form-control custom-input" placeholder="Masukkan nama atau NIS..." value="{{ request('search') }}">
             </div>
-            
-            {{-- TOMBOL FILTER & RESET SEJAJAR TINGGI --}}
             <div class="col-md-3 d-flex align-items-end gap-2">
                 <button type="submit" class="btn btn-primary fw-semibold flex-grow-1" style="height: 43px;">
                     <i class="bi bi-search me-1"></i> Filter
@@ -101,6 +94,66 @@
             </div>
         </div>
     </form>
+</div>
+
+{{-- SUMMARY CARDS --}}
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card p-3 custom-card h-100" style="border-left: 3px solid #28c76f !important;">
+            <div class="d-flex align-items-center gap-3">
+                <div style="background:rgba(40,199,111,0.15);padding:12px;border-radius:10px">
+                    <i class="bi bi-cash-coin text-success fs-4"></i>
+                </div>
+                <div>
+                    <div class="text-white-50 small">Total Pendapatan</div>
+                    <div class="fw-bold text-white">Rp {{ number_format($totalPendapatan, 0, ',', '.') }}</div>
+                    <div class="text-white-50" style="font-size:10px">{{ $filterLabel }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 custom-card h-100" style="border-left: 3px solid #3b82f6 !important;">
+            <div class="d-flex align-items-center gap-3">
+                <div style="background:rgba(59,130,246,0.15);padding:12px;border-radius:10px">
+                    <i class="bi bi-check2-circle text-primary fs-4"></i>
+                </div>
+                <div>
+                    <div class="text-white-50 small">Transaksi Lunas</div>
+                    <div class="fw-bold text-white">{{ $totalTransaksi }} Transaksi</div>
+                    <div class="text-white-50" style="font-size:10px">{{ $filterLabel }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 custom-card h-100" style="border-left: 3px solid #ff9f43 !important;">
+            <div class="d-flex align-items-center gap-3">
+                <div style="background:rgba(255,159,67,0.15);padding:12px;border-radius:10px">
+                    <i class="bi bi-clock text-warning fs-4"></i>
+                </div>
+                <div>
+                    <div class="text-white-50 small">Menunggu Verifikasi</div>
+                    <div class="fw-bold text-white">{{ $totalPending }} Transaksi</div>
+                    <div class="text-white-50" style="font-size:10px">{{ $filterLabel }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 custom-card h-100" style="border-left: 3px solid #7367f0 !important;">
+            <div class="d-flex align-items-center gap-3">
+                <div style="background:rgba(115,103,240,0.15);padding:12px;border-radius:10px">
+                    <i class="bi bi-graph-up text-info fs-4"></i>
+                </div>
+                <div>
+                    <div class="text-white-50 small">Rata-rata per Transaksi</div>
+                    <div class="fw-bold text-white">Rp {{ number_format($rataRata, 0, ',', '.') }}</div>
+                    <div class="text-white-50" style="font-size:10px">{{ $filterLabel }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div id="areaCetak" class="card p-4 custom-card">
@@ -121,7 +174,7 @@
                 <tr>
                     <th style="width: 4%">NO</th>
                     <th>TANGGAL</th>
-                    <th>NISN</th>
+                    <th>NIS</th>
                     <th>NAMA SISWA</th>
                     <th>KELAS</th>
                     <th>BULAN</th>
@@ -140,43 +193,47 @@
                         {{ date('d/m/Y', strtotime($lap->tanggal_bayar ?? $lap->created_at)) }}<br>
                         <small class="text-muted">{{ date('H:i', strtotime($lap->tanggal_bayar ?? $lap->created_at)) }} WIB</small>
                     </td>
-                    <td>{{ $lap->tagihan->siswa->nis ?? $lap->siswa->nis ?? '-' }}</td>
-                    <td class="fw-semibold text-white">{{ $lap->tagihan->siswa->nama ?? $lap->siswa->nama ?? '-' }}</td>
+                    <td>{{ $lap->tagihan->siswa->nis ?? '-' }}</td>
+                    <td class="fw-semibold text-white">{{ $lap->tagihan->siswa->nama ?? '-' }}</td>
                     <td>
                         @if(isset($lap->tagihan->siswa->kelas))
-                            {{ $lap->tagihan->siswa->kelas->tingkat ?? '' }} {{ $lap->tagihan->siswa->kelas->nama_kelas ?? $lap->tagihan->siswa->kelas->jurusan ?? '' }}
-                        @elseif(isset($lap->siswa->kelas))
-                            {{ $lap->siswa->kelas->tingkat ?? '' }} {{ $lap->siswa->kelas->nama_kelas ?? $lap->siswa->kelas->jurusan ?? '' }}
+                            {{ $lap->tagihan->siswa->kelas->tingkat ?? '' }}
+                            {{ $lap->tagihan->siswa->kelas->jurusan ?? '' }}
+                            {{ $lap->tagihan->siswa->kelas->nomor_kelas ?? '' }}
                         @else
-                            {{ $lap->kelas ?? '-' }}
+                            -
                         @endif
                     </td>
                     <td>{{ $lap->bulan_teks }}</td>
                     <td style="color: #ff9f43 !important;" class="fw-bold">
-                        Rp {{ number_format($lap->jumlah_bayar ?? $lap->nominal ?? 0, 0, ',', '.') }}
+                        Rp {{ number_format($lap->jumlah_bayar ?? 0, 0, ',', '.') }}
                     </td>
                     <td>
-                        @if(strtolower($lap->metode_pembayaran ?? $lap->metode ?? 'tunai') == 'transfer')
+                        @php $metode = strtolower($lap->metode_bayar ?? 'tunai'); @endphp
+                        @if($metode == 'transfer')
                             <span class="badge badge-transfer px-2 py-1">Transfer</span>
+                        @elseif($metode == 'ewallet')
+                            <span class="badge badge-ewallet px-2 py-1">E-Wallet</span>
+                        @elseif($metode == 'dana')
+                            <span class="badge badge-dana px-2 py-1">Dana</span>
                         @else
                             <span class="badge badge-tunai px-2 py-1">Tunai</span>
                         @endif
                     </td>
                     <td class="text-center">
-                        @php
-                            $status = strtolower($lap->status ?? 'lunas');
-                            $badgeClass = 'badge-lunas';
-                            if($status == 'pending') $badgeClass = 'badge-pending';
-                            if($status == 'ditolak') $badgeClass = 'badge-ditolak';
-                        @endphp
-                        <span class="badge {{ $badgeClass }} px-2 py-1 rounded-pill" style="min-width: 60px;">
-                            {{ ucfirst($lap->status ?? 'Lunas') }}
-                        </span>
+                        @php $status = strtolower($lap->status_verifikasi ?? 'pending'); @endphp
+                        @if($status == 'valid')
+                            <span class="badge badge-valid px-2 py-1 rounded-pill" style="min-width:60px">Lunas</span>
+                        @elseif($status == 'pending')
+                            <span class="badge badge-pending px-2 py-1 rounded-pill" style="min-width:60px">Pending</span>
+                        @else
+                            <span class="badge badge-tolak px-2 py-1 rounded-pill" style="min-width:60px">Ditolak</span>
+                        @endif
                     </td>
                     <td>
-                        <span class="text-white">{{ $lap->petugas->name ?? $lap->petugas->nama ?? $lap->user->name ?? 'Admin' }}</span>
+                        <span class="text-white">{{ $lap->petugas->name ?? '-' }}</span>
                     </td>
-                    <td class="text-muted">{{ $lap->no_kwitansi ?? $lap->kode_pembayaran ?? '-' }}</td>
+                    <td class="text-muted">{{ $lap->no_kwitansi ?? '-' }}</td>
                 </tr>
                 @empty
                 <tr>
@@ -189,7 +246,6 @@
         </table>
     </div>
 
-    {{-- COUNTER DATA DAN PAGINATION LINK TETAP AMAN DI SINI --}}
     <div class="mt-4 d-flex justify-content-between align-items-center non-printable">
         <div class="text-white-50 small">
             Menampilkan {{ $laporans->firstItem() ?? 0 }} - {{ $laporans->lastItem() ?? 0 }} dari {{ $laporans->total() }} data

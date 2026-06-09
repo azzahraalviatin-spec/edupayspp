@@ -380,7 +380,7 @@
             <i class="bi bi-mortarboard-fill text-white" style="font-size:17px"></i>
         </div>
         <div class="brand-text">
-            <div class="brand-name">Aplikasi SPP</div>
+            <div class="brand-name">Edupay</div>
             <div class="brand-sub">Portal Siswa</div>
         </div>
     </div>

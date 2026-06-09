@@ -18,36 +18,15 @@ class LaporanController extends Controller
         ];
     }
 
-    public function index(Request $request)
+    // Fungsi reusable untuk apply filter ke query
+    private function applyFilters($query, Request $request)
     {
-        $query = Pembayaran::with([
-            'tagihan.siswa.kelas',
-            'petugas'
-        ])->orderBy('created_at', 'desc');
-
-        // 1. Filter Berdasarkan Bulan
         if ($request->filled('bulan')) {
-            $bulan_pilihan = $request->bulan;
-            $query->where(function($q) use ($bulan_pilihan) {
-                $q->where('bulan_dibayar', $bulan_pilihan)
-                  ->orWhere('bulan', $bulan_pilihan)
-                  ->orWhereHas('tagihan', function($sq) use ($bulan_pilihan) {
-                      $sq->where('bulan', $bulan_pilihan)
-                        ->orWhere('bulan_dibayar', $bulan_pilihan);
-                  });
-            });
+            $query->whereHas('tagihan', fn($q) => $q->where('bulan', $request->bulan));
         }
-
-        // 2. FIX FILTER TAHUN: Cari murni berdasarkan tahun tanggal pembayaran asli di tabel pembayarans
         if ($request->filled('tahun')) {
-            $tahun_pilihan = $request->tahun;
-            $query->where(function($q) use ($tahun_pilihan) {
-                $q->whereYear('tanggal_bayar', $tahun_pilihan)
-                  ->orWhereYear('created_at', $tahun_pilihan);
-            });
+            $query->whereYear('tanggal_bayar', $request->tahun);
         }
-
-        // 3. Filter Berdasarkan Pencarian Nama/NIS
         if ($request->filled('search')) {
             $search = $request->search;
             $query->whereHas('tagihan.siswa', function($q) use ($search) {
@@ -55,81 +34,78 @@ class LaporanController extends Controller
                   ->orWhere('nis', 'like', "%{$search}%");
             });
         }
+        return $query;
+    }
 
-        // Pagination tetap 10 data
+    public function index(Request $request)
+    {
+        $nama_bulan = $this->getNamaBulan();
+
+        // === QUERY DATA TABEL (pagination) ===
+        $query = Pembayaran::with(['tagihan.siswa.kelas', 'petugas'])
+                    ->orderBy('created_at', 'desc');
+        $query = $this->applyFilters($query, $request);
         $laporans = $query->paginate(10)->withQueryString();
 
         // Konversi angka bulan jadi teks Indonesia
-        $nama_bulan = $this->getNamaBulan();
         foreach ($laporans as $lap) {
-            $bulan_angka = $lap->bulan_dibayar ?? $lap->bulan ?? $lap->tagihan->bulan ?? $lap->tagihan->bulan_dibayar ?? null;
+            $bulan_angka = $lap->tagihan->bulan ?? null;
             if (is_numeric($bulan_angka) && isset($nama_bulan[(int)$bulan_angka])) {
                 $lap->bulan_teks = $nama_bulan[(int)$bulan_angka];
             } else {
-                $lap->bulan_teks = $bulan_angka ?? '-';
+                $lap->bulan_teks = '-';
             }
         }
 
-        // List tahun dari 2001 - 2040
+        // === QUERY SUMMARY CARDS (tanpa pagination, pakai filter yang sama) ===
+        $summaryQuery = Pembayaran::query();
+        $summaryQuery = $this->applyFilters($summaryQuery, $request);
+        $allData = $summaryQuery->get();
+
+        // Hitung summary berdasarkan status_verifikasi
+        $totalPendapatan = $allData->where('status_verifikasi', 'valid')->sum('jumlah_bayar');
+        $totalTransaksi  = $allData->where('status_verifikasi', 'valid')->count();
+        $totalPending    = $allData->where('status_verifikasi', 'pending')->count();
+        $rataRata        = $totalTransaksi > 0 ? $totalPendapatan / $totalTransaksi : 0;
+
+        // Label filter untuk ditampilkan di card
+        $filterLabel = 'Semua Data';
+        if ($request->filled('search')) {
+            $filterLabel = 'Pencarian: ' . $request->search;
+        }
+        if ($request->filled('bulan') && $request->filled('tahun')) {
+            $filterLabel = $nama_bulan[$request->bulan] . ' ' . $request->tahun;
+        } elseif ($request->filled('bulan')) {
+            $filterLabel = $nama_bulan[$request->bulan];
+        } elseif ($request->filled('tahun')) {
+            $filterLabel = 'Tahun ' . $request->tahun;
+        }
+
         $list_tahun = range(2001, 2040);
 
-        return view('admin.laporan.index', compact('laporans', 'nama_bulan', 'list_tahun'));
+        return view('admin.laporan.index', compact(
+            'laporans', 'nama_bulan', 'list_tahun',
+            'totalPendapatan', 'totalTransaksi', 'totalPending',
+            'rataRata', 'filterLabel'
+        ));
     }
 
-  public function downloadPdf(Request $request)
+    public function downloadPdf(Request $request)
     {
-        // 1. Ambil data pembayaran beserta relasi siswa, kelas, dan petugasnya
-        $query = Pembayaran::with([
-            'tagihan.siswa.kelas',
-            'petugas'
-        ]);
-
-        // 2. Jalankan Filter Bulan jika admin memilih bulan
-        if ($request->filled('bulan')) {
-            $bulan_pilihan = $request->bulan;
-            $query->where(function($q) use ($bulan_pilihan) {
-                $q->where('bulan_dibayar', $bulan_pilihan)
-                  ->orWhere('bulan', $bulan_pilihan)
-                  ->orWhereHas('tagihan', function($sq) use ($bulan_pilihan) {
-                      $sq->where('bulan', $bulan_pilihan)
-                        ->orWhere('bulan_dibayar', $bulan_pilihan);
-                  });
-            });
-        }
-
-        // 3. Jalankan Filter Tahun jika admin memilih tahun
-        if ($request->filled('tahun')) {
-            $tahun_pilihan = $request->tahun;
-            $query->where(function($q) use ($tahun_pilihan) {
-                $q->whereYear('tanggal_bayar', $tahun_pilihan)
-                  ->orWhereYear('created_at', $tahun_pilihan);
-            });
-        }
-
-        // 4. Jalankan Filter Pencarian Nama/NIS jika ada teks yang dicari
-        if ($request->filled('search')) {
-            $query->whereHas('tagihan.siswa', function($q) use ($request) {
-                $q->where('nama', 'like', '%' . $request->search . '%')
-                  ->orWhere('nis', 'like', '%' . $request->search . '%');
-            });
-        }
-
-        // 5. Eksekusi query ke database
+        $query = Pembayaran::with(['tagihan.siswa.kelas', 'petugas']);
+        $query = $this->applyFilters($query, $request);
         $laporans = $query->orderBy('created_at', 'desc')->get();
-        
-        // 6. Pemetaan angka bulan ke teks Indonesia (Biar nama siswa, kelas, & bulan muncul di PDF)
+
         $nama_bulan = $this->getNamaBulan();
-        
         foreach ($laporans as $lap) {
-            $bulan_angka = $lap->bulan_dibayar ?? $lap->bulan ?? $lap->tagihan->bulan ?? $lap->tagihan->bulan_dibayar ?? null;
+            $bulan_angka = $lap->tagihan->bulan ?? null;
             if (is_numeric($bulan_angka) && isset($nama_bulan[(int)$bulan_angka])) {
                 $lap->bulan_teks = $nama_bulan[(int)$bulan_angka];
             } else {
-                $lap->bulan_teks = $bulan_angka ?? '-';
+                $lap->bulan_teks = '-';
             }
         }
 
-        // 7. Lempar data ke template cetak-pdf dan download filenya
         $pdf = Pdf::loadView('admin.laporan.cetak-pdf', compact('laporans'));
         return $pdf->download('Laporan_Pembayaran_SPP_' . date('Ymd') . '.pdf');
     }

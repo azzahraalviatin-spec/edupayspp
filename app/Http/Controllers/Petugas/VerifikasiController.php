@@ -6,6 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Pembayaran;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Notifications\PembayaranMasukAdmin;
+use App\Notifications\PembayaranDikonfirmasi;
+use App\Notifications\PembayaranDitolak;
+use App\Models\User;
 
 class VerifikasiController extends Controller
 {
@@ -29,6 +33,13 @@ class VerifikasiController extends Controller
 
         $pembayaran->tagihan->update(['status' => 'lunas']);
 
+        // Notif ke admin
+        User::role('admin')->get()->each->notify(new PembayaranMasukAdmin($pembayaran->fresh(['tagihan.siswa'])));
+
+        // Notif ke siswa
+        $siswa = $pembayaran->tagihan->siswa->user ?? null;
+        if ($siswa) $siswa->notify(new PembayaranDikonfirmasi($pembayaran->fresh(['tagihan'])));
+
         return back()->with('success', 'Pembayaran berhasil dikonfirmasi!');
     }
 
@@ -45,12 +56,16 @@ class VerifikasiController extends Controller
 
         $pembayaran->tagihan->update(['status' => 'belum_bayar']);
 
+        // Notif ke siswa
+        $siswa = $pembayaran->tagihan->siswa->user ?? null;
+        if ($siswa) $siswa->notify(new PembayaranDitolak($pembayaran->fresh(['tagihan'])));
+
         return back()->with('success', 'Pembayaran berhasil ditolak.');
     }
 
     public function konfirmasiSemua()
     {
-        $pending = Pembayaran::with('tagihan')
+        $pending = Pembayaran::with('tagihan.siswa.user')
             ->where('status_verifikasi', 'pending')
             ->get();
 
@@ -61,6 +76,13 @@ class VerifikasiController extends Controller
                 'no_kwitansi'       => $this->generateNoKwitansi(),
             ]);
             $bayar->tagihan->update(['status' => 'lunas']);
+
+            // Notif ke admin
+            User::role('admin')->get()->each->notify(new PembayaranMasukAdmin($bayar->fresh(['tagihan.siswa'])));
+
+            // Notif ke siswa
+            $siswa = $bayar->tagihan->siswa->user ?? null;
+            if ($siswa) $siswa->notify(new PembayaranDikonfirmasi($bayar->fresh(['tagihan'])));
         }
 
         return back()->with('success', 'Semua pembayaran berhasil dikonfirmasi!');

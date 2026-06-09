@@ -9,7 +9,11 @@ use App\Models\TahunAjaran;
 use App\Models\SettingSpp;
 use App\Models\Pembayaran;
 use Illuminate\Http\Request;
+use App\Notifications\TagihanBaru;
 use Illuminate\Support\Facades\Auth;
+use App\Notifications\PembayaranMasukAdmin;
+use App\Models\User;
+
 
 class TagihanController extends Controller
 {
@@ -84,17 +88,21 @@ class TagihanController extends Controller
 
             $nominalBayar = max(0, $nominalAwal - $totalPotongan);
 
-            Tagihan::create([
-                'siswa_id'        => $siswa->id,
-                'tahun_ajaran_id' => $request->tahun_ajaran_id,
-                'bulan'           => $bulanGenerate,
-                'nominal_awal'    => $nominalAwal,
-                'total_potongan'  => $totalPotongan,
-                'nominal_bayar'   => $nominalBayar,
-                'status'          => 'belum_bayar',
-            ]);
+          $tagihan = Tagihan::create([
+    'siswa_id'        => $siswa->id,
+    'tahun_ajaran_id' => $request->tahun_ajaran_id,
+    'bulan'           => $bulanGenerate,
+    'nominal_awal'    => $nominalAwal,
+    'total_potongan'  => $totalPotongan,
+    'nominal_bayar'   => $nominalBayar,
+    'status'          => 'belum_bayar',
+]);
 
-            $generated++;
+if ($siswa->user) {
+    $siswa->user->notify(new TagihanBaru($tagihan));
+}
+
+$generated++;
         }
 
         return redirect()->route('petugas.tagihan.generate')
@@ -183,45 +191,51 @@ class TagihanController extends Controller
     /**
      * Proses bayar tunai
      */
-    public function bayarTunai(Request $request, $id)
-    {
-        $tagihan = Tagihan::findOrFail($id);
+  public function bayarTunai(Request $request, $id)
+{
+    $tagihan = Tagihan::findOrFail($id);
 
-        if ($tagihan->status === 'lunas') {
-            return redirect()->route('petugas.tunggakan')
-                ->with('error', 'Tagihan ini sudah lunas!');
-        }
-
-        $request->validate([
-            'uang_dibayar' => 'required|numeric|min:1',
-        ]);
-
-        $totalBayar  = $tagihan->nominal_bayar;
-        $uangDibayar = $request->uang_dibayar;
-
-        if ($uangDibayar < $totalBayar) {
-            return back()->with('error', 'Uang pembayaran kurang!');
-        }
-
-        $kembalian = $uangDibayar - $totalBayar;
-
-        $pembayaran = Pembayaran::create([
-            'tagihan_id'        => $tagihan->id,
-            'jumlah_bayar'      => $totalBayar,
-            'uang_dibayar'      => $uangDibayar,
-            'kembalian'         => $kembalian,
-            'metode_pembayaran' => 'tunai',
-            'status_verifikasi' => 'valid',
-            'tanggal_bayar'     => now(),
-            'petugas_id'        => Auth::id(),
-            'no_kwitansi'       => 'KW-' . time(),
-        ]);
-
-        $tagihan->update(['status' => 'lunas']);
-
-        return redirect()->route('petugas.struk', $pembayaran->id);
+    if ($tagihan->status === 'lunas') {
+        return redirect()->route('petugas.tunggakan')
+            ->with('error', 'Tagihan ini sudah lunas!');
     }
 
+    $request->validate([
+        'uang_dibayar' => 'required|numeric|min:1',
+    ]);
+
+    $totalBayar  = $tagihan->nominal_bayar;
+    $uangDibayar = $request->uang_dibayar;
+
+    if ($uangDibayar < $totalBayar) {
+        return back()->with('error', 'Uang pembayaran kurang!');
+    }
+
+    $kembalian = $uangDibayar - $totalBayar;
+
+    $pembayaran = Pembayaran::create([
+        'tagihan_id'        => $tagihan->id,
+        'jumlah_bayar'      => $totalBayar,
+        'uang_dibayar'      => $uangDibayar,
+        'kembalian'         => $kembalian,
+        'metode_pembayaran' => 'tunai',
+        'status_verifikasi' => 'valid',
+        'tanggal_bayar'     => now(),
+        'petugas_id'        => Auth::id(),
+        'no_kwitansi'       => 'KW-' . time(),
+    ]);
+
+    $tagihan->update(['status' => 'lunas']);
+
+    // === KIRIM NOTIFIKASI KE SEMUA ADMIN ===
+    $admins = User::role('admin')->get();
+    foreach ($admins as $admin) {
+        $admin->notify(new PembayaranMasukAdmin($pembayaran));
+    }
+    // =======================================
+
+    return redirect()->route('petugas.struk', $pembayaran->id);
+}
     public function struk($id)
     {
         $pembayaran = Pembayaran::with([

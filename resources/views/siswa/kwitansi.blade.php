@@ -314,21 +314,8 @@ body {
     margin-bottom: 10px;
 }
 
-.stempel {
-    width: 180px;
-    position: absolute;
-    left: 50%;
-    top: 40px;
-    transform: translateX(-50%);
-    opacity: .95;
-}
-
-.ttd {
-    width: 130px;
-    position: relative;
-    z-index: 2;
-    margin-top: 50px;
-}
+.stempel { display: none; }
+.ttd { display: none; }
 
 .petugas-nama {
     margin-top: 10px;
@@ -359,9 +346,9 @@ body {
 
     {{-- Ganti bagian top-action di kwitansi.blade.php --}}
     <div class="top-action">
-        <a href="{{ route('siswa.tagihan') }}" class="btn-back">
-            ← Kembali
-        </a>
+     <a href="{{ route('siswa.riwayat') }}" class="btn-back">
+    ← Kembali
+</a>
         <a href="{{ route('siswa.tagihan.download-pdf', $tagihan->id) }}" class="btn-print">
             ⬇️ Download PDF
         </a>
@@ -493,15 +480,13 @@ body {
                     </ol>
                 </div>
 
-                <div class="ttd-box">
+              <div class="ttd-box">
                     <div class="ttd-title">Petugas</div>
-                    <img src="{{ asset('images/stempel.png') }}" class="stempel" alt="Stempel">
-                    <img src="{{ asset('images/ttd.png') }}" class="ttd" alt="TTD">
+                    <div style="margin-top: 60px;"></div>
                     <div class="petugas-nama">
                         {{ $tagihan->pembayaran->petugas->name ?? 'Petugas' }}
                     </div>
                 </div>
-
             </div>
 
         </div>

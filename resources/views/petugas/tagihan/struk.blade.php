@@ -312,22 +312,8 @@ body{
     margin-bottom:10px;
 }
 
-.stempel{
-    width:180px;
-    position:absolute;
-    left:50%;
-    top:40px;
-    transform:translateX(-50%);
-    opacity:.95;
-}
-
-.ttd{
-    width:130px;
-    position:relative;
-    z-index:2;
-    margin-top:50px;
-}
-
+.stempel{ display:none; }
+.ttd{ display:none; }
 .petugas{
     margin-top:10px;
     font-size:20px;
@@ -359,9 +345,9 @@ body{
 
     <div class="top-action">
 
-        <a href="{{ route('petugas.tunggakan') }}" class="btn-back">
-            ← Kembali
-        </a>
+<a href="{{ route('petugas.riwayat') }}" class="btn-back">
+    ← Kembali
+</a>
 
         <button onclick="window.print()" class="btn-print">
             Cetak Struk
@@ -573,14 +559,13 @@ body{
 
                 </div>
 
-                <div class="ttd-box">
+           <div class="ttd-box">
 
                     <div class="ttd-title">
                         Petugas
                     </div>
 
-         <img src="{{ asset('images/stempel.png') }}" class="stempel" alt="Stempel">
-<img src="{{ asset('images/ttd.png') }}" class="ttd" alt="TTD">
+                    <div style="margin-top: 60px;"></div>
 
                     <div class="petugas">
                         {{ $pembayaran->petugas->name ?? 'Petugas' }}
